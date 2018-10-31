@@ -6,59 +6,63 @@ const prisma = new Prisma({
 });
 
 // Prisma Query
+const createPostforUser = async (authorId, data) => {
+  const userExists = await prisma.exists.User({ id: authorId });
 
-// prisma.query.users(null, "{ id name posts { id title } }").then(data => {
-//   console.log(JSON.stringify(data, undefined, 2));
-// });
+  if (!userExists) throw new Error("User not found");
 
-// prisma.query.comments(null, "{ id text author { id name }}").then(data => {
-//   console.log(JSON.stringify(data, undefined, 2));
-// })
-
-// Prisma Mutation
-
-// prisma.mutation
-//   .createPost(
-//     {
-//       data: {
-//         title: "Fighting about age difference...",
-//         body: "...",
-//         published: false,
-//         author: {
-//           connect: {
-//             id: "cjnvnt72c002h07746ny7y4u1"
-//           }
-//         }
-//       }
-//     },
-//     ` { id title body published }`
-//   )
-//   .then(data => {
-//     console.log(data);
-//     return prisma.query.users(null, "{ id name posts { id title } }");
-//   })
-//   .then(data => {
-//     console.log(JSON.stringify(data, undefined, 2));
-//   });
-
-prisma.mutation
-  .updatePost(
+  const post = await prisma.mutation.createPost(
     {
       data: {
-        body: 'Grandiose and fetching water...',
-        published: true
-      },
-      where: {
-        id: "cjnwbi9nl00400774b0qvyzv2"
+        ...data,
+        author: {
+          connect: {
+            id: authorId
+          }
+        }
       }
     },
-    ` { id title body published }`
-  )
-  .then(data => {
-    console.log(data);
-    return prisma.query.posts(null, "{ id title published body }");
-  })
+    "{ author { id name email posts { id title published } } }"
+  );
+
+  return post.author;
+};
+
+const updatePostforUser = async (postId, data) => {
+  const postExists = await prisma.exists.Post({ id: postId });
+
+  if (!postExists) throw new Error("Post not found");
+
+  const post = await prisma.mutation.updatePost(
+    {
+      data,
+      where: { id: postId }
+    },
+    `{ author { id name email posts { id title published } } }`
+  );
+
+  return post.author;
+};
+
+updatePostforUser("cjnw4rrpx00340774jx0clpkx", {
+  title: "From Paris with love",
+  body: "Cracking the hands of kitchen staff"
+})
   .then(data => {
     console.log(JSON.stringify(data, undefined, 2));
+  })
+  .catch(err => {
+    console.log(err);
   });
 
+// createPostforUser("cjnvndgh7001x0774lcw8rrie", {
+//   title: "Castlevania",
+//   body: "Alucard is fighting his father...",
+//   published: true
+// })
+//   .then(user => {
+//     console.log(JSON.stringify(user, undefined, 2));
+//   })
+//   .catch(err => {
+//     console.log(err);
+//   });
