@@ -7,6 +7,8 @@ import User from "./resolvers/User";
 import Post from "./resolvers/Post";
 import Comment from "./resolvers/Comment";
 
+import "./prisma";
+
 // Resolvers
 
 // 4 args passed into resolvers
