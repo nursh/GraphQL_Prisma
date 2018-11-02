@@ -67,36 +67,45 @@ const Mutation = {
     return prisma.mutation.deletePost(opArgs, info);
   },
   createComment(parent, args, { prisma }, info) {
-    return prisma.mutation.createComment({
-      data: {
-        text: args.data.text,
-        author: {
-          connect: {
-            id: args.data.author
-          }
-        },
-        post: {
-          connect: {
-            id: args.data.post
+    return prisma.mutation.createComment(
+      {
+        data: {
+          text: args.data.text,
+          author: {
+            connect: {
+              id: args.data.author
+            }
+          },
+          post: {
+            connect: {
+              id: args.data.post
+            }
           }
         }
-      }
-    }, info);
-  },
-  updateComment(parent, args, { db, pubsub }, info) {
-    return prisma.mutation.updateComment({
-      where: {
-        id: args.id
       },
-      data: args.data
-    }, info);
+      info
+    );
   },
-  deleteComment(parent, args, { db, pubsub }, info) {
-    return prisma.mutation.deleteComment({
-      where: {
-        id: args.id
-      }
-    }, info);
+  updateComment(parent, args, { prisma }, info) {
+    return prisma.mutation.updateComment(
+      {
+        where: {
+          id: args.id
+        },
+        data: args.data
+      },
+      info
+    );
+  },
+  deleteComment(parent, args, { prisma }, info) {
+    return prisma.mutation.deleteComment(
+      {
+        where: {
+          id: args.id
+        }
+      },
+      info
+    );
   }
 };
 
