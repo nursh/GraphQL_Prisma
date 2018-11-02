@@ -66,62 +66,37 @@ const Mutation = {
     };
     return prisma.mutation.deletePost(opArgs, info);
   },
-  createComment(parent, args, { db, pubsub }, info) {
-    const { post: postId, author: authorId } = args.data;
-    const userExists = db.users.some(user => user.id === authorId);
-    const postExists = db.posts.some(
-      post => post.id === postId && post.published
-    );
-
-    if (!userExists) throw new Error("User not found");
-    if (!postExists) throw new Error("Post not found");
-
-    const comment = {
-      id: uuidv4(),
-      ...args.data
-    };
-
-    db.comments.push(comment);
-    pubsub.publish(`comment ${postId}`, {
-      comment: {
-        mutation: "CREATED",
-        data: comment
+  createComment(parent, args, { prisma }, info) {
+    return prisma.mutation.createComment({
+      data: {
+        text: args.data.text,
+        author: {
+          connect: {
+            id: args.data.author
+          }
+        },
+        post: {
+          connect: {
+            id: args.data.post
+          }
+        }
       }
-    });
-    return comment;
+    }, info);
   },
   updateComment(parent, args, { db, pubsub }, info) {
-    const { id, data } = args;
-    const { text } = data;
-
-    const comment = db.comments.find(comment => comment.id === id);
-    if (!comment) throw new Error("Comment not found");
-
-    if (typeof text === "string") comment.text = text;
-
-    pubsub.publish(`comment ${comment.post}`, {
-      comment: {
-        mutation: "UPDATED",
-        data: comment
-      }
-    });
-    return comment;
+    return prisma.mutation.updateComment({
+      where: {
+        id: args.id
+      },
+      data: args.data
+    }, info);
   },
   deleteComment(parent, args, { db, pubsub }, info) {
-    const { id } = args;
-    const commentIndex = db.comments.findIndex(comment => comment.id === id);
-
-    if (commentIndex === -1) throw new Error("Comment does not exist");
-
-    const [deletedComment] = db.comments.splice(commentIndex, 1);
-
-    pubsub.publish(`comment ${deletedComment.post}`, {
-      comment: {
-        mutation: "DELETED",
-        data: deletedComment
+    return prisma.mutation.deleteComment({
+      where: {
+        id: args.id
       }
-    });
-    return deletedComment;
+    }, info);
   }
 };
 
