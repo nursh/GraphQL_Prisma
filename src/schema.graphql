@@ -2,8 +2,6 @@ type Query {
   users(query: String): [User!]!
   posts(query: String): [Post!]!
   comments: [Comment!]!
-  me: User!
-  post: Post!
 }
 
 type Mutation {
@@ -26,7 +24,6 @@ type Subscription {
 input UpdateUserInput {
   name: String
   email: String
-  age: Int
 }
 
 input UpdatePostInput {
@@ -42,7 +39,6 @@ input UpdateCommentInput {
 input CreateUserInput {
   name: String!
   email: String!
-  age: Int
 }
 
 input CreatePostInput {
@@ -62,7 +58,6 @@ type User {
   id: ID!
   name: String!
   email: String!
-  age: Int
   posts: [Post!]!
   comments: [Comment!]!
 }
