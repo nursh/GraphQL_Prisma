@@ -5,31 +5,49 @@ const Mutation = {
     const emailTaken = await prisma.exists.User({ email: args.data.email });
     if (emailTaken) throw new Error("Email taken");
 
-    const user = await prisma.mutation.createUser({ data: args.data}, info);
+    const user = await prisma.mutation.createUser({ data: args.data }, info);
     return user;
   },
-  updateUser(parent, args, { db }, info) {
-    const { id, data } = args;
-    const { name, age, email } = data;
-    const user = db.users.find(user => user.id === id);
+  async updateUser(parent, args, { prisma }, info) {
+    const opArgs = {
+      where: {
+        id: args.id
+      },
+      data: args.data
+    };
+    return prisma.mutation.updateUser(opArgs, info);
+    // const { id, data } = args;
+    // const { name, age, email } = data;
+    // const user = db.users.find(user => user.id === id);
 
-    if (!user) {
-      throw new Error("User not found");
-    }
+    // if (!user) {
+    //   throw new Error("User not found");
+    // }
 
-    if (typeof email === "string") {
-      const emailTaken = db.users.some(user => user.email === email);
+    // if (typeof email === "string") {
+    //   const emailTaken = db.users.some(user => user.email === email);
 
-      if (emailTaken) {
-        throw new email("Email taken");
-      }
+    //   if (emailTaken) {
+    //     throw new email("Email taken");
+    //   }
 
-      user.email = email;
-    }
+    //   user.email = email;
+    // }
 
-    if (typeof name === "string") user.name = name;
-    if (typeof age !== undefined) user.age = age;
+    // if (typeof name === "string") user.name = name;
+    // if (typeof age !== undefined) user.age = age;
 
+    // return user;
+  },
+  async deleteUser(parent, args, { prisma }, info) {
+    const userExists = await prisma.exists.User({ id: args.id });
+    if (!userExists) throw new Error("User not found");
+
+    const opArgs = {};
+    opArgs.where = {
+      id: args.id
+    };
+    const user = await prisma.mutation.deleteUser(opArgs, info);
     return user;
   },
   createPost(parent, args, { db, pubsub }, info) {
@@ -94,6 +112,26 @@ const Mutation = {
 
     return post;
   },
+  deletePost(parent, args, { db, pubsub }, info) {
+    const { id } = args;
+    const postIndex = db.posts.findIndex(post => post.id === id);
+
+    if (postIndex === -1) throw new Error("Post does not exist");
+
+    const [deletedPost] = db.posts.splice(postIndex, 1);
+    db.comments = db.comments.filter(comment => comment.post !== id);
+
+    if (deletedPost.published) {
+      pubsub.publish("post", {
+        post: {
+          mutation: "DELETED",
+          data: deletedPost
+        }
+      });
+    }
+
+    return deletedPost;
+  },
   createComment(parent, args, { db, pubsub }, info) {
     const { post: postId, author: authorId } = args.data;
     const userExists = db.users.some(user => user.id === authorId);
@@ -134,45 +172,6 @@ const Mutation = {
       }
     });
     return comment;
-  },
-  deleteUser(parent, args, { db }, info) {
-    const { id } = args;
-    const userIndex = db.users.findIndex(user => user.id === id);
-    if (userIndex === -1) throw new Error("User not found");
-
-    const [deletedUser] = db.users.splice(userIndex, 1);
-
-    posts = db.posts.filter(post => {
-      const match = post.author === id;
-      if (match) {
-        comments = db.comments.filter(comment => comment.post !== post.id);
-      }
-
-      return !match;
-    });
-
-    db.comments = db.comments.filter(comment => comment.author !== id);
-    return deletedUser;
-  },
-  deletePost(parent, args, { db, pubsub }, info) {
-    const { id } = args;
-    const postIndex = db.posts.findIndex(post => post.id === id);
-
-    if (postIndex === -1) throw new Error("Post does not exist");
-
-    const [deletedPost] = db.posts.splice(postIndex, 1);
-    db.comments = db.comments.filter(comment => comment.post !== id);
-
-    if (deletedPost.published) {
-      pubsub.publish("post", {
-        post: {
-          mutation: "DELETED",
-          data: deletedPost
-        }
-      });
-    }
-
-    return deletedPost;
   },
   deleteComment(parent, args, { db, pubsub }, info) {
     const { id } = args;
