@@ -5,7 +5,7 @@ type Query {
 }
 
 type Mutation {
-  loginUser(data: LoginUserInput!): AuthPayload!
+  login(data: LoginUserInput!): AuthPayload!
   createUser(data: CreateUserInput!): AuthPayload!
   createPost(data: CreatePostInput!): Post!
   createComment(data: CreateCommentInput!): Comment!
