@@ -36,8 +36,48 @@ const Query = {
   comments(parent, args, { prisma }, info) {
     return prisma.query.comments(null, info);
   },
-  post(parent, args, { prisma, request }, info) {
+  async post(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request, false);
+    // Only give posts if the post is published or authored by the user
+    const posts = await prisma.query.posts(
+      {
+        where: {
+          id: args.id,
+          OR: [
+            {
+              published: true
+            },
+            {
+              author: {
+                id: userId
+              }
+            }
+          ]
+        }
+      },
+      info
+    );
+
+    if (posts.length === 0) throw new Error("Post not found");
+
+    return posts[0];
+  },
+  async me(parent, args, { prisma, request }, info) {
     const userId = getUserId(request);
+
+    const userExists = await prisma.exists.User({ id: userId });
+    if (!userExists) throw new Error("user not found");
+
+    const user = await prisma.query.user(
+      {
+        where: {
+          id: userId
+        }
+      },
+      info
+    );
+
+    return user;
   }
 };
 
