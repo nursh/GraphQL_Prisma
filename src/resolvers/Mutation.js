@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const Mutation = {
   async createUser(parent, args, { prisma }, info) {
@@ -9,16 +10,16 @@ const Mutation = {
     if (emailTaken) throw new Error("Email taken");
 
     const password = await bcrypt.hash(args.data.password, 10);
-    const user = await prisma.mutation.createUser(
-      {
-        data: {
-          ...data,
-          password
-        }
-      },
-      info
-    );
-    return user;
+    const user = await prisma.mutation.createUser({
+      data: {
+        ...args.data,
+        password
+      }
+    });
+    return {
+      user,
+      token: jwt.sign({ userId: user.id }, "thisisasecret")
+    };
   },
   async updateUser(parent, args, { prisma }, info) {
     // You don't need the error checking, it's just to provide a better error message
