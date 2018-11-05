@@ -93,7 +93,23 @@ const Mutation = {
         id: userId
       }
     });
+    const isPublished = await prisma.exists.Post({
+      id: args.id,
+      published: true
+    });
+
     if (!postExists) throw new Error("Post not found");
+
+    if (isPublished && args.data.published === false) {
+      await prisma.mutation.deleteManyComments({
+        where: {
+          post: {
+            id: args.id
+          }
+        }
+      });
+    }
+
     const opArgs = {
       where: {
         id: args.id
