@@ -118,8 +118,13 @@ const Mutation = {
     };
     return prisma.mutation.deletePost(opArgs, info);
   },
-  createComment(parent, args, { prisma, request }, info) {
+  async createComment(parent, args, { prisma, request }, info) {
     const userId = getUserId(request);
+    const postExists = await prisma.exists.Post({
+      id: args.data.post,
+      published: true
+    });
+    if (!postExists) throw new Error("Post not found");
     return prisma.mutation.createComment(
       {
         data: {
