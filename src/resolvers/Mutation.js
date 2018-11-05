@@ -40,23 +40,26 @@ const Mutation = {
       token: jwt.sign({ userId: user.id }, "thisisasecret")
     };
   },
-  async updateUser(parent, args, { prisma }, info) {
+  async updateUser(parent, args, { prisma, request }, info) {
     // You don't need the error checking, it's just to provide a better error message
+    const userId = getUserId(request);
     const opArgs = {
       where: {
-        id: args.id
+        id: userId
       },
       data: args.data
     };
     return prisma.mutation.updateUser(opArgs, info);
   },
-  async deleteUser(parent, args, { prisma }, info) {
-    const userExists = await prisma.exists.User({ id: args.id });
+  async deleteUser(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request);
+
+    const userExists = await prisma.exists.User({ id: userId });
     if (!userExists) throw new Error("User not found");
 
     const opArgs = {};
     opArgs.where = {
-      id: args.id
+      id: userId
     };
     const user = await prisma.mutation.deleteUser(opArgs, info);
     return user;
