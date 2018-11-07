@@ -86,3 +86,18 @@ test("Should not be able to create user with short password", async () => {
     })
   ).rejects.toThrow();
 });
+
+test("should fetch user profile", async () => {
+  const client = getClient(userOne.jwt);
+  const getProfile = gql`
+    query {
+      me {
+        id
+        name
+        email
+      }
+    }
+  `;
+
+  await client.query({ query: getProfile });
+});
