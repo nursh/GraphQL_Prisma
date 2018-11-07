@@ -1,13 +1,11 @@
 import "cross-fetch/polyfill";
-import ApolloClient from "apollo-boost";
 import gql from "graphql-tag";
 
 import prisma from "../src/prisma";
-import seedDatabase from './utils/seedDatabase';
+import seedDatabase, { userOne } from "./utils/seedDatabase";
+import getClient from "./utils/getClient";
 
-const client = new ApolloClient({
-  uri: "http://localhost:4000"
-});
+const client = getClient();
 
 beforeEach(seedDatabase);
 
@@ -55,8 +53,6 @@ test("Should expose public author profiles", async () => {
   expect(jenUser.email).toBe(null);
   expect(jenUser.name).toBe("Jen");
 });
-
-
 
 test("Should not login with bad credentials", async () => {
   const login = gql`
